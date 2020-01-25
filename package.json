@@ -42,7 +42,7 @@
     "README.md",
     "index.js",
     "index.d.ts",
-    "dist10",
+    "dist",
     "src",
     "!*/__tests__"
   ],
