@@ -63,6 +63,7 @@ api-docs/
 # Transpiled JavaScript files from Typescript
 /dist10
 /dist
+tsconfig.tsbuildinfo
 
 #IDE
 .idea
