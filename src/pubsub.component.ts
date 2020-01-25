@@ -1,14 +1,9 @@
-import {
-  Component,
-  ProviderMap,
-  CoreBindings,
-  Application,
-  Server,
-} from '@loopback/core';
-import {inject, Constructor} from '@loopback/context';
-import {PubSubBindings} from './keys';
+import {Component, ProviderMap} from '@loopback/core';
+// import {inject, Constructor} from '@loopback/context';
 import {PubSubConfig} from './types';
+import {PubSubBindings} from './keys';
 import {
+  PubSubConfigFnProvider,
   PubSubPublishFnProvider,
   PubSubSubscribeFnProvider,
   PubSubUnsubscribeFnProvider,
@@ -17,10 +12,12 @@ import {
 export class PubSubComponent implements Component {
   providers?: ProviderMap;
 
-  constructor(@inject(PubSubBindings.PUBSUB_CONFIG) public config: PubSubConfig) {
+  // constructor(@inject(PubSubBindings.PUBSUB_CONFIG) public config: PubSubConfig) {
+  constructor() {
     // this.sanityCheck();
 
     this.providers = {
+      [PubSubBindings.PUBSUB_CONFIG_ACTION.key]: PubSubConfigFnProvider,
       [PubSubBindings.PUBSUB_PUBLISH_ACTION.key]: PubSubPublishFnProvider,
       [PubSubBindings.PUBSUB_SUBSCRIBE_ACTION.key]: PubSubSubscribeFnProvider,
       [PubSubBindings.PUBSUB_UNSUBSCRIBE_ACTION
@@ -31,6 +28,6 @@ export class PubSubComponent implements Component {
   }
 
   // sanityCheck() {
-    // this.config...
+  // this.config...
   // }
 }

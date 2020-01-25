@@ -1,9 +1,5 @@
 import {$$asyncIterator} from 'iterall';
-import {PubSubStrategy} from './types';
-
-// export interface Queue {
-//   (value: IteratorResult<T>), done: boolean): void;
-// }
+import {PubSubEngine} from './types';
 
 export class PubSubAsyncIterator<T> implements AsyncIterator<T> {
   // private pullQueue: Function[];
@@ -14,11 +10,13 @@ export class PubSubAsyncIterator<T> implements AsyncIterator<T> {
   private eventsArray: string[];
   private subscriptionIds: Promise<number[]> | undefined;
   private listening: boolean;
-  private pubsub: PubSubStrategy;
+  private pubsub: PubSubEngine;
+  // private pubsub: PubSubStrategy | PromiseLike<PubSubStrategy>;
   private options: Object | undefined;
 
   constructor(
-    pubsub: PubSubStrategy,
+    pubsub: PubSubEngine,
+    // pubsub: PubSubStrategy,
     eventNames: string | string[],
     options?: Object,
   ) {
@@ -30,6 +28,12 @@ export class PubSubAsyncIterator<T> implements AsyncIterator<T> {
     this.eventsArray =
       typeof eventNames === 'string' ? [eventNames] : eventNames;
   }
+
+  // public isPubSubStrategy(
+  //   pubsub: PubSubStrategy | PromiseLike<PubSubStrategy>,
+  // ): pubsub is PubSubStrategy {
+  //   return <PubSubStrategy>pubsub.publish !== undefined;
+  // }
 
   public async next(): Promise<IteratorResult<T>> {
     await this.subscribeAll();
@@ -102,4 +106,3 @@ export class PubSubAsyncIterator<T> implements AsyncIterator<T> {
     }
   }
 }
-

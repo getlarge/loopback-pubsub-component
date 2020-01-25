@@ -10,7 +10,7 @@ export class PubSubUnsubscribeFnProvider
   ) {}
 
   value(): PubSubUnsubscribeFn {
-    return (subscriptionId: number) => this.action(subscriptionId);
+    return subscriptionId => this.action(subscriptionId);
   }
 
   async action(subscriptionId: number): Promise<void> {
@@ -18,6 +18,6 @@ export class PubSubUnsubscribeFnProvider
     if (!pubsubStrategy) {
       throw new Error('No valid strategy found for PubSubUnsubscribeFn');
     }
-    pubsubStrategy.unsubscribe(subscriptionId);
+    await pubsubStrategy.unsubscribe(subscriptionId);
   }
 }

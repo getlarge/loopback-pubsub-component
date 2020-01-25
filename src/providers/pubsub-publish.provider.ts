@@ -9,7 +9,7 @@ export class PubSubPublishFnProvider implements Provider<PubSubPublishFn> {
   ) {}
 
   value(): PubSubPublishFn {
-    return (triggerName: string, payload: any) =>
+    return (triggerName, payload) =>
       this.action(triggerName, payload);
   }
 
@@ -18,6 +18,6 @@ export class PubSubPublishFnProvider implements Provider<PubSubPublishFn> {
     if (!pubsubStrategy) {
       throw new Error('No valid strategy found for PubSubPublishFn');
     }
-    return pubsubStrategy.publish(triggerName, payload);
+    await pubsubStrategy.publish(triggerName, payload);
   }
 }

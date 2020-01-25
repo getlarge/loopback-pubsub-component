@@ -9,7 +9,7 @@ export class PubSubSubscribeFnProvider implements Provider<PubSubSubscribeFn> {
   ) {}
 
   value(): PubSubSubscribeFn {
-    return (triggerName: string, onMessage: Function, options?: Object) =>
+    return (triggerName, onMessage, options?) =>
       this.action(triggerName, onMessage, options);
   }
 
