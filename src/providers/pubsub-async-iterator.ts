@@ -1,22 +1,21 @@
-import {PubSubIterableFn, PubSubStrategy} from '../types';
 import {inject, Provider, Getter} from '@loopback/core';
+import {PubSubIterableFn, PubSubStrategy} from '../types';
 import {PubSubBindings} from '../keys';
-import {PubSubAsyncIterator} from '../pubsub-async-iterator';
 
-// export class PubSubIterableFnProvider
-//   implements Provider<PubSubIterableFn> {
-//   constructor(
-//     @inject.getter(PubSubBindings.PUBSUB_STRATEGY)
-//     readonly getStoreStrategy: Getter<PubSubStrategy>,
-//   ) {}
+export class PubSubIterableProvider implements Provider<PubSubIterableFn> {
+  constructor(
+    @inject.getter(PubSubBindings.PUBSUB_STRATEGY)
+    readonly getStoreStrategy: Getter<PubSubStrategy>,
+  ) {}
 
-//   value(): PubSubIterableFn {
-//     return triggers => this.action(triggers);
-//   }
+  value(): PubSubIterableFn {
+    return triggers => this.action(triggers);
+  }
 
-//   action(triggers: string | string[]): Promise<AsyncIterable<string | string[]> | PubSubAsyncIterator<any>> {
-//     return this.getStoreStrategy().then(
-//       res => new PubSubAsyncIterator<any>(res, triggers),
-//     );
-//   }
-// }
+  async action(
+    triggers: string | string[],
+  ): Promise<AsyncIterator<string | string[]>> {
+    const pubsubStrategy = await this.getStoreStrategy();
+    return pubsubStrategy.asyncIterator(triggers);
+  }
+}

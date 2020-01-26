@@ -1,5 +1,5 @@
-import {PubSubPublishFn, PubSubStrategy} from '../types';
 import {inject, Provider, Getter} from '@loopback/core';
+import {PubSubPublishFn, PubSubStrategy} from '../types';
 import {PubSubBindings} from '../keys';
 
 export class PubSubPublishFnProvider implements Provider<PubSubPublishFn> {

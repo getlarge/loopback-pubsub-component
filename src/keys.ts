@@ -5,10 +5,10 @@ import {
   PubSubSubscribeFn,
   PubSubUnsubscribeFn,
   PubSubIterableFn,
+  PubSubCallbackFn,
   PubSubStrategy,
+  PubSubMetadata,
 } from './types';
-// import {PubSubMetadata} from './decorators/pubsub.decorator';
-// import {PubSubAsyncIterator} from './pubsub-async-iterator';
 
 export namespace PubSubBindings {
   export const PUBSUB_STRATEGY = BindingKey.create<PubSubStrategy | undefined>(
@@ -36,12 +36,16 @@ export namespace PubSubBindings {
     'pubsub.asyncIterator',
   );
 
-  // export const METADATA = BindingKey.create<PubSubMetadata | undefined>(
-  //   'pubsub.operationMetadata',
-  // );
+  export const PUBSUB_CALLBACK_ACTION = BindingKey.create<
+    PubSubCallbackFn | undefined
+  >('pubsub.callback');
+
+  export const METADATA = BindingKey.create<PubSubMetadata | undefined>(
+    'pubsub.operationMetadata',
+  );
 }
 
-// export const PUBSUB_METADATA_KEY = MetadataAccessor.create<
-//   PubSubMetadata,
-//   MethodDecorator
-// >('pubsub.operationsData');
+export const PUBSUB_METADATA_KEY = MetadataAccessor.create<
+  PubSubMetadata,
+  MethodDecorator
+>('pubsub.operationsData');

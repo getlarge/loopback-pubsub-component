@@ -1,3 +1,4 @@
+import {Request, Response} from '@loopback/rest';
 import {PubSubAsyncIterator} from './pubsub-async-iterator';
 
 export type PubSubConfig = {
@@ -8,6 +9,23 @@ export type PubSubConfig = {
   // tslint:disable-next-line:no-any
   [key: string]: any;
 };
+
+export type CallbackObject = {
+  // instead of path add a runtime expression field,
+  // to be evaluated when response is received ?
+  path: string;
+  method: string;
+  name?: string;
+  // requestBody
+  // response
+  // parameters
+  // tslint:disable-next-line:no-any
+  [key: string]: any;
+};
+
+export interface PubSubMetadata extends CallbackObject {
+  options?: Object;
+}
 
 export interface PubSubConfigFn {
   (config?: Object): Promise<PubSubConfig | undefined>;
@@ -25,14 +43,14 @@ export interface PubSubUnsubscribeFn {
   (subscriptionId: number): Promise<void>;
 }
 
-// export interface PubSubIterableFn<T> {
-//   // (triggers: string | string[]): AsyncIterator<T>;
-//   (triggers: string | string[]): Promise<AsyncIterator<T>>;
-// }
-
 export interface PubSubIterableFn {
-  // (triggers: string | string[]): AsyncIterator<T>;
-  (triggers: string | string[]): Promise<AsyncIterable<string | string[]> | PubSubAsyncIterator<any>>;
+  (triggers: string | string[]): Promise<AsyncIterator<string | string[]>>;
+}
+
+export interface PubSubCallbackFn {
+  (request: Request, response: Response, config?: Object): Promise<
+    CallbackObject | undefined
+  >;
 }
 
 // export type SubscriptionIterator = (
@@ -47,20 +65,18 @@ export abstract class PubSubEngine {
     options?: Object,
   ): Promise<number>;
   public abstract unsubscribe(subId: number): Promise<void>;
-  public asyncIterator<T>(triggers: string | string[]): AsyncIterator<T> {
+  public asyncIterator<T>(
+    triggers: string | string[],
+  ): AsyncIterator<T> | Promise<AsyncIterator<T>> {
     return new PubSubAsyncIterator<T>(this, triggers);
   }
 }
 
-// export interface PubSubStrategy extends PubSubEngine {
-export interface PubSubStrategy {
+export interface PubSubStrategy extends PubSubEngine {
   setConfig(config?: PubSubConfig): Promise<PubSubConfig | undefined>;
-  publish(triggerName: string, payload: any): Promise<void>;
-  subscribe(
-    triggerName: string,
-    onMessage: Function,
+  checkCallback(
+    request: Request,
+    response: Response,
     options?: Object,
-  ): Promise<number>;
-  unsubscribe(subscriptionId: number): Promise<void>;
-  // asyncIterator<T>(triggers: string | string[]): AsyncIterator<T>;
+  ): Promise<CallbackObject | undefined>;
 }

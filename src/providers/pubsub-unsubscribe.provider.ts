@@ -1,5 +1,5 @@
-import {PubSubUnsubscribeFn, PubSubStrategy} from '../types';
 import {inject, Provider, Getter} from '@loopback/core';
+import {PubSubUnsubscribeFn, PubSubStrategy} from '../types';
 import {PubSubBindings} from '../keys';
 
 export class PubSubUnsubscribeFnProvider
