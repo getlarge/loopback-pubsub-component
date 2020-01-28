@@ -6,13 +6,14 @@ import {
 import {PUBSUB_METADATA_KEY} from '../keys';
 import {PubSubMetadata} from '../types';
 
-export function callback(path: string, method: string, options?: Object) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function publish(triggerName: string, payload: any, options?: Object) {
   return MethodDecoratorFactory.createDecorator<PubSubMetadata>(
     PUBSUB_METADATA_KEY,
     {
-      path,
-      method,
-      options: options || {},
+      triggerName,
+      payload,
+      options: options ?? {},
     },
   );
 }

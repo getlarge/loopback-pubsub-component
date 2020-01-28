@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {$$asyncIterator} from 'iterall';
 import {PubSubEngine} from './types';
 
@@ -76,7 +77,10 @@ export class PubSubAsyncIterator<T> implements AsyncIterator<T> {
   private async emptyQueue() {
     if (this.listening) {
       this.listening = false;
-      if (this.subscriptionIds) this.unsubscribeAll(await this.subscriptionIds);
+      if (this.subscriptionIds) {
+        // this.unsubscribeAll(await this.subscriptionIds);
+        await this.unsubscribeAll(await this.subscriptionIds);
+      }
       this.pullQueue.forEach(resolve =>
         resolve({value: undefined, done: true}),
       );
@@ -102,7 +106,9 @@ export class PubSubAsyncIterator<T> implements AsyncIterator<T> {
 
   private unsubscribeAll(subscriptionIds: number[]) {
     for (const subscriptionId of subscriptionIds) {
-      this.pubsub.unsubscribe(subscriptionId);
+      // this.pubsub.unsubscribe(subscriptionId);
+      return this.pubsub.unsubscribe(subscriptionId);
     }
   }
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */

@@ -9,10 +9,10 @@ export class PubSubPublishFnProvider implements Provider<PubSubPublishFn> {
   ) {}
 
   value(): PubSubPublishFn {
-    return (triggerName, payload) =>
-      this.action(triggerName, payload);
+    return (triggerName, payload) => this.action(triggerName, payload);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async action(triggerName: string, payload: any): Promise<void> {
     const pubsubStrategy = await this.getStoreStrategy();
     if (!pubsubStrategy) {

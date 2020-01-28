@@ -5,7 +5,6 @@ import {
   PubSubSubscribeFn,
   PubSubUnsubscribeFn,
   PubSubIterableFn,
-  PubSubCallbackFn,
   PubSubStrategy,
   PubSubMetadata,
 } from './types';
@@ -20,25 +19,21 @@ export namespace PubSubBindings {
     PubSubConfigFn | undefined
   >('pubsub.config');
 
-  export const PUBSUB_PUBLISH_ACTION = BindingKey.create<
-    PubSubPublishFn | undefined
-  >('pubsub.publish');
+  export const PUBSUB_PUBLISH = BindingKey.create<PubSubPublishFn | undefined>(
+    'pubsub.publish',
+  );
 
-  export const PUBSUB_SUBSCRIBE_ACTION = BindingKey.create<
+  export const PUBSUB_SUBSCRIBE = BindingKey.create<
     PubSubSubscribeFn | undefined
   >('pubsub.subscribe');
 
-  export const PUBSUB_UNSUBSCRIBE_ACTION = BindingKey.create<
+  export const PUBSUB_UNSUBSCRIBE = BindingKey.create<
     PubSubUnsubscribeFn | undefined
   >('pubsub.unsubscribe');
 
   export const PUBSUB_ASYNC_ITERATOR = BindingKey.create<PubSubIterableFn>(
     'pubsub.asyncIterator',
   );
-
-  export const PUBSUB_CALLBACK_ACTION = BindingKey.create<
-    PubSubCallbackFn | undefined
-  >('pubsub.callback');
 
   export const METADATA = BindingKey.create<PubSubMetadata | undefined>(
     'pubsub.operationMetadata',
