@@ -14,7 +14,12 @@ export namespace PubSubBindings {
     'pubsub.strategy',
   );
 
-  // export const PUBSUB_CONFIG = `${CoreBindings.APPLICATION_CONFIG}.pubsub`;
+  export const CONFIG = `${CoreBindings.APPLICATION_CONFIG}.pubsub`;
+
+  export const PUBSUB_CONFIG = BindingKey.create<PubSubConfigFn | undefined>(
+    'pubsub.options',
+  );
+
   export const PUBSUB_CONFIG_ACTION = BindingKey.create<
     PubSubConfigFn | undefined
   >('pubsub.config');

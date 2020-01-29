@@ -23,8 +23,11 @@ import {RestApplication} from '@loopback/rest';
 import {PubSubBindings, PubSubComponent, PubSubStrategyProvider} from 'loopback-pubsub-component';
 
 const app = new RestApplication();
-// Keep in mind that some extra configuration is required
-// as shown in the following steps
+
+app.bind(PubSubBindings.CONFIG).to({
+  eventEmitter: new EventEmitter(),
+  // client: mqttClient
+});
 app.component(PubSubComponent);
 app.bind(PubSubBindings.PUBSUB_STRATEGY).toProvider(PubSubStrategyProvider);
 
@@ -32,33 +35,37 @@ app.bind(PubSubBindings.PUBSUB_STRATEGY).toProvider(PubSubStrategyProvider);
 
 ### Create a repository
 
-Create a repository that implements your client/broker logic, here an example for a simple EventEmitter :
+Create a repository that implements your client/broker logic, here an example for a simple EventEmitter.
+You could create several repositories, with MQTT client or other kinds of PubSub clients.
 
 ```typescript
-
 import {inject} from '@loopback/core';
-import {PubSubEngine, PubSubAsyncIterator} from 'loopback-pubsub-component';
+import {
+  PubSubEngine,
+  PubSubBindings,
+  PubSubConfig,
+  PubSubAsyncIterator,
+} from 'loopback-pubsub-component';
 import {EventEmitter} from 'events';
 
-export interface PubSubOptions {
-  eventEmitter?: EventEmitter;
-}
-
-export class PubSubRepository extends PubSubEngine {
+export class PubSubEERepository extends PubSubEngine {
   protected ee: EventEmitter;
-  public subscriptions: {[key: string]: [string, (...args: any[]) => void]};
+  public subscriptions: {[subId: number]: [string, (...args: any[]) => void]};
   public subIdCounter: number;
 
-  constructor(options: PubSubOptions = {}) {
+  constructor(@inject(PubSubBindings.CONFIG) options: PubSubConfig) {
     super();
-    this.ee = options.eventEmitter || new EventEmitter();
+    if (options.eventEmitter) {
+      this.ee = options.eventEmitter;
+    } else {
+      this.ee = new EventEmitter();
+    }
     this.subscriptions = {};
     this.subIdCounter = 0;
   }
 
   public publish(triggerName: string, payload: any): Promise<void> {
     this.ee.emit(triggerName, payload);
-    console.log('PubSubRepository publish', triggerName, payload);
     return Promise.resolve();
   }
 
@@ -67,34 +74,52 @@ export class PubSubRepository extends PubSubEngine {
     onMessage: (...args: any[]) => void,
     options?: Object,
   ): Promise<number> {
-    console.log('PubSubRepository subscribe', triggerName);
     this.ee.addListener(triggerName, onMessage);
     this.subIdCounter = this.subIdCounter + 1;
     this.subscriptions[this.subIdCounter] = [triggerName, onMessage];
     return Promise.resolve(this.subIdCounter);
   }
 
-  public unsubscribe(subId: number) {
+  public unsubscribe(subIdOrTriggerName: number | string) {
+    if (typeof subIdOrTriggerName === 'string') {
+      return this.unsubscribeByName(subIdOrTriggerName);
+    }
+    return this.unsubscribeById(subIdOrTriggerName);
+  }
+
+  public asyncIterator<T>(triggers: string | string[]): AsyncIterator<T> {
+    return new PubSubAsyncIterator<T>(this, triggers);
+  }
+
+  private unsubscribeById(subId: number) {
     const [triggerName, onMessage] = this.subscriptions[subId];
     delete this.subscriptions[subId];
     this.ee.removeListener(triggerName, onMessage);
     return Promise.resolve();
   }
 
-  public asyncIterator<T>(triggers: string | string[]): AsyncIterator<T> {
-    return new PubSubAsyncIterator<T>(this, triggers);
+  private unsubscribeByName(triggerName: string) {
+    const subIds: number[] = Object.keys(this.subscriptions).map(Number);
+    for (const subId of subIds) {
+      if (this.subscriptions[subId][0] === triggerName) {
+        const onMessage = this.subscriptions[subId][1];
+        delete this.subscriptions[subId];
+        this.ee.removeListener(triggerName, onMessage);
+        break;
+      }
+    }
+    return Promise.resolve();
   }
 }
-
 ```
 
 ### Strategy provider
 
-Create a strategy provider that implements your custom logic :
+Create a strategy provider that implements your custom logic.
+If you have several repositories, inject them and create a function to switch between repositories with trigerName filtering.
 
 ```typescript
 import {inject, Provider, ValueOrPromise} from '@loopback/core';
-import {Request, Response} from '@loopback/rest';
 import {repository} from '@loopback/repository';
 import {
   PubSubBindings,
@@ -102,16 +127,25 @@ import {
   PubSubStrategy,
   PubSubMetadata,
 } from 'loopback-pubsub-component';
-import {PubSubRepository} from '../repositories';
+import {PubSubEERepository, PubSubMQTTRepository} from '../repositories';
 
 export class PubSubStrategyProvider implements Provider<PubSubStrategy | undefined> {
+  private engines: (PubSubEERepository | PubSubMQTTRepository)[];
+
   constructor(
     @inject(PubSubBindings.METADATA) private metadata: PubSubMetadata,
-    @repository(PubSubRepository) protected pubsubRepo: PubSubRepository,
-  ) {}
+    @repository(PubSubEERepository) protected pubsubEERepo: PubSubEERepository,
+    @repository(PubSubMQTTRepository) protected pubsubMQTTRepo: PubSubMQTTRepository,
+  ) {
+    this.engines = [this.pubsubEERepo, this.pubsubMQTTRepo];
+  }
+
+  selectRepository(triggerNames: string | string[]): PubSubEERepository | PubSubMQTTRepository {
+    // filter triggerName or triggerNames[0]
+    return this.engines[0];
+  }
 
   value(): ValueOrPromise<PubSubStrategy | undefined> {
-
     const self = this;
 
     return {
@@ -121,19 +155,24 @@ export class PubSubStrategyProvider implements Provider<PubSubStrategy | undefin
       },
 
       publish: async (triggerName: string, payload: any) => {
-        await this.pubsubRepo.publish(triggerName, JSON.stringify(payload));
+        const engine = this.selectRepository(triggerName);
+        await engine.publish(triggerName, JSON.stringify(payload));
       },
 
       subscribe: (triggerName: string, onMessage: (...args: any[]) => void, options?: Object) => {
-        return this.pubsubRepo.subscribe(triggerName, onMessage, options);
+        const engine = this.selectRepository(triggerName);
+        // return Promise.all([engines.map( engine => engine.subscribe(triggerName, onMessage, options))])
+        return engine.subscribe(triggerName, onMessage, options);
       },
 
-      unsubscribe: async (subscriptionId: number) => {
-        await this.pubsubRepo.unsubscribe(subscriptionId);
+      unsubscribe: async (triggerName: string) => {
+        const engine = this.selectRepository(triggerName);
+        await engine.unsubscribe(triggerName);
       },
 
       asyncIterator(triggers: string | string[]) {
-        return self.pubsubRepo.asyncIterator(triggers);
+        const engine = self.selectRepository(triggers);
+        return engine.asyncIterator(triggers);
       },
 
     };
@@ -186,7 +225,6 @@ export class DeviceController {
         content: {'application/json': {schema: {'x-ts-type': Device}}},
       },
     },
-    // callbacks: <callbackName>
   })
   async create(@requestBody() device: Device): Promise<Device> {
     const token = getToken(this.request);
@@ -202,8 +240,6 @@ export class DeviceController {
 ## TODO 
 
 - Adding decorator to use it like a router in a Controller ( @publish, @subscribe ... ) and control access ( when using broker )
-
-- Using multiple PuSub engines
 
 
 ## License

@@ -6,18 +6,15 @@ export class PubSubAsyncIterator<T> implements AsyncIterator<T> {
   // private pullQueue: Function[];
   // private pullQueue: ((value: IteratorResult<T>) => void)[];
   private pullQueue: any[];
-  // private pushQueue: any[];
   private pushQueue: T[];
   private eventsArray: string[];
   private subscriptionIds: Promise<number[]> | undefined;
   private listening: boolean;
   private pubsub: PubSubEngine;
-  // private pubsub: PubSubStrategy | PromiseLike<PubSubStrategy>;
   private options: Object | undefined;
 
   constructor(
     pubsub: PubSubEngine,
-    // pubsub: PubSubStrategy,
     eventNames: string | string[],
     options?: Object,
   ) {
@@ -29,12 +26,6 @@ export class PubSubAsyncIterator<T> implements AsyncIterator<T> {
     this.eventsArray =
       typeof eventNames === 'string' ? [eventNames] : eventNames;
   }
-
-  // public isPubSubStrategy(
-  //   pubsub: PubSubStrategy | PromiseLike<PubSubStrategy>,
-  // ): pubsub is PubSubStrategy {
-  //   return <PubSubStrategy>pubsub.publish !== undefined;
-  // }
 
   public async next(): Promise<IteratorResult<T>> {
     await this.subscribeAll();
@@ -105,10 +96,9 @@ export class PubSubAsyncIterator<T> implements AsyncIterator<T> {
   }
 
   private unsubscribeAll(subscriptionIds: number[]) {
-    for (const subscriptionId of subscriptionIds) {
-      // this.pubsub.unsubscribe(subscriptionId);
-      return this.pubsub.unsubscribe(subscriptionId);
-    }
+    return Promise.all(
+      subscriptionIds.map(subId => this.pubsub.unsubscribe(subId)),
+    );
   }
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

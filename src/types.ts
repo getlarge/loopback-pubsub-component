@@ -1,14 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import {EventEmitter} from 'events';
 import {PubSubAsyncIterator} from './pubsub-async-iterator';
 
-export type PubSubConfig = {
+export type Config = {
   host?: string;
   protocol?: string;
   username?: string;
   password?: string;
+};
+
+export interface PubSubConfig extends Config {
+  eventEmitter?: EventEmitter;
   // tslint:disable-next-line:no-any
   [key: string]: any;
-};
+}
 
 export type Packet = {
   triggerName: string;
@@ -16,7 +21,6 @@ export type Packet = {
 };
 
 export interface PubSubMetadata extends Packet {
-  // parent: {path: string; method: string};
   options?: Object;
 }
 
@@ -33,12 +37,20 @@ export interface PubSubSubscribeFn {
 }
 
 export interface PubSubUnsubscribeFn {
-  (subscriptionId: number): Promise<void>;
+  (triggerName: string): Promise<void>;
 }
 
 export interface PubSubIterableFn {
   (triggers: string | string[]): Promise<AsyncIterator<string | string[]>>;
 }
+
+// export interface PubSubStartFn {
+//   (): Promise<void>;
+// }
+
+// export interface PubSubStopFn {
+//   (): Promise<void>;
+// }
 
 // export type SubscriptionIterator = (
 //   triggers: string | string[],
@@ -51,7 +63,9 @@ export abstract class PubSubEngine {
     onMessage: Function,
     options?: Object,
   ): Promise<number>;
-  public abstract unsubscribe(subId: number): Promise<void>;
+  public abstract unsubscribe(
+    subIdOrTriggerName: number | string,
+  ): Promise<void>;
   public asyncIterator<T>(
     triggers: string | string[],
   ): AsyncIterator<T> | Promise<AsyncIterator<T>> {
@@ -61,6 +75,18 @@ export abstract class PubSubEngine {
 
 export interface PubSubStrategy extends PubSubEngine {
   setConfig(config?: PubSubConfig): Promise<PubSubConfig | undefined>;
+  publish(triggerName: string, payload: any): Promise<void>;
+  subscribe(
+    triggerName: string,
+    onMessage: Function,
+    options?: Object,
+  ): Promise<number>;
+  unsubscribe(triggerName: string): Promise<void>;
+  // asyncIterator<T>(
+  //   triggers: string | string[],
+  // ): AsyncIterator<T> | Promise<AsyncIterator<T>>;
+  // start()
+  // stop()
 }
 
 /* eslint-enable @typescript-eslint/no-explicit-any */

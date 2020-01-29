@@ -10,14 +10,14 @@ export class PubSubUnsubscribeFnProvider
   ) {}
 
   value(): PubSubUnsubscribeFn {
-    return subscriptionId => this.action(subscriptionId);
+    return triggerName => this.action(triggerName);
   }
 
-  async action(subscriptionId: number): Promise<void> {
+  async action(triggerName: string): Promise<void> {
     const pubsubStrategy = await this.getStoreStrategy();
     if (!pubsubStrategy) {
       throw new Error('No valid strategy found for PubSubUnsubscribeFn');
     }
-    await pubsubStrategy.unsubscribe(subscriptionId);
+    await pubsubStrategy.unsubscribe(triggerName);
   }
 }

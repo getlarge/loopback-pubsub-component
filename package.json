@@ -16,7 +16,7 @@
   "scripts": {
     "acceptance": "lb-mocha \"dist/__tests__/acceptance/**/*.js\"",
     "build:apidocs": "lb-apidocs",
-    "build": "lb-tsc",
+    "build": "npm run clean && lb-tsc",
     "clean": "lb-clean loopback-pubsub-component*.tgz dist package api-docs *.tsbuildinfo",
     "lint": "npm run prettier:check && npm run eslint",
     "lint:fix": "npm run eslint:fix && npm run prettier:fix",

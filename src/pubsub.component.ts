@@ -1,6 +1,6 @@
 import {Component, ProviderMap} from '@loopback/core';
-// import {inject, Constructor} from '@loopback/context';
-// import {PubSubConfig} from './types';
+import {inject} from '@loopback/context';
+import {PubSubConfig} from './types';
 import {PubSubBindings} from './keys';
 import {
   PubSubConfigFnProvider,
@@ -14,8 +14,9 @@ import {
 export class PubSubComponent implements Component {
   providers?: ProviderMap;
 
-  // constructor(@inject(PubSubBindings.PUBSUB_CONFIG) public config: PubSubConfig) {
-  constructor() {
+  // lifeCycleObservers = [PubSubObserver];
+
+  constructor(@inject(PubSubBindings.CONFIG) public config: PubSubConfig) {
     // this.sanityCheck();
     this.providers = {
       [PubSubBindings.PUBSUB_CONFIG_ACTION.key]: PubSubConfigFnProvider,
